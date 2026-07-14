@@ -1,0 +1,94 @@
+name: Validate and build TradeLog Android release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    name: Build signed standalone APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NODE_ENV: production
+      TRADELOG_UPLOAD_STORE_FILE: ${{ runner.temp }}/tradelog-upload.jks
+      TRADELOG_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+      TRADELOG_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      TRADELOG_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Free runner disk space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost || true
+          sudo rm -rf /usr/local/lib/android/sdk/system-images || true
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/* || true
+          df -h
+
+      - name: Install dependencies reproducibly
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run TypeScript checks
+        run: npm run typecheck
+
+      - name: Decode Android upload keystore
+        shell: bash
+        run: |
+          test -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}"
+          printf '%s' "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "$TRADELOG_UPLOAD_STORE_FILE"
+          test -s "$TRADELOG_UPLOAD_STORE_FILE"
+
+      - name: Build signed standalone APK for modern Android phones
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew clean assembleRelease \
+            --no-daemon \
+            --max-workers=2 \
+            -Dorg.gradle.parallel=false \
+            -PreactNativeArchitectures=arm64-v8a
+
+      - name: Verify APK exists
+        run: |
+          test -s android/app/build/outputs/apk/release/app-release.apk
+          cp android/app/build/outputs/apk/release/app-release.apk TradeLog-installable-release.apk
+          ls -lh TradeLog-installable-release.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TradeLog-installable-APK-${{ github.run_number }}
+          path: TradeLog-installable-release.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove temporary keystore
+        if: always()
+        run: rm -f "$TRADELOG_UPLOAD_STORE_FILE"

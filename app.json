@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "TradeLog",
+    "slug": "tradelog",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D0D12"
+      },
+      "package": "com.tradelog.app",
+      "versionCode": 1,
+      "permissions": ["POST_NOTIFICATIONS"]
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.tradelog.app"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-image-picker",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#0D0D12"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#D4AF37"
+        }
+      ]
+    ]
+  }
+}

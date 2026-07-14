@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+dist/
+*.jks
+*.keystore
+.env
+
+# Local signing credentials - never upload
+credentials.json
+android/keystores/
