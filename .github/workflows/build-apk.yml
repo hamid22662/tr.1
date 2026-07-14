@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 45
     env:
       NODE_ENV: production
-      TRADELOG_UPLOAD_STORE_FILE: ${{ runner.temp }}/tradelog-upload.jks
+      TRADELOG_UPLOAD_STORE_FILE: /tmp/tradelog-upload.jks
       TRADELOG_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
       TRADELOG_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       TRADELOG_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
